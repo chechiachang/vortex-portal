@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as NamespaceModel from '@/models/Namespace';
+import * as UserModel from '@/models/User';
 import { connect } from 'react-redux';
 import * as styles from './styles.module.scss';
 import { Button, Icon, Popconfirm, Card, Table } from 'antd';
@@ -11,6 +12,8 @@ import { InjectedAuthRouterProps } from 'redux-auth-wrapper/history4/redirect';
 import { Dispatch } from 'redux';
 import { RootState, RootAction, RTDispatch } from '@/store/ducks';
 import { clusterOperations } from '@/store/ducks/cluster';
+import { userOperations } from '@/store/ducks/user';
+import { find } from 'lodash';
 
 import NamespaceForm from '@/components/NamespaceForm';
 
@@ -25,6 +28,8 @@ interface OwnProps {
   fetchNamespaces: () => any;
   addNamespace: (data: NamespaceModel.Namespace) => any;
   removeNamespace: (id: string) => any;
+  users: Array<UserModel.User>;
+  fetchUsers: () => any;
 }
 
 class Namespace extends React.Component<NamespaceProps, NamespaceState> {
@@ -37,6 +42,7 @@ class Namespace extends React.Component<NamespaceProps, NamespaceState> {
 
   public componentDidMount() {
     this.props.fetchNamespaces();
+    this.props.fetchUsers();
   }
 
   protected showCreate = () => {
@@ -66,6 +72,22 @@ class Namespace extends React.Component<NamespaceProps, NamespaceState> {
     ];
   };
 
+  protected getNamespaceInfo = (
+    namespaces: Array<NamespaceModel.Namespace>
+  ) => {
+    return namespaces.map(namespace => {
+      const owner = find(this.props.users, user => {
+        return user.id === namespace.ownerID;
+      });
+      const displayName = owner === undefined ? 'none' : owner.displayName;
+      return {
+        name: namespace.name,
+        owner: displayName,
+        age: moment(namespace.createdAt).calendar()
+      };
+    });
+  };
+
   public render() {
     const { namespaces } = this.props;
     const columns: Array<ColumnProps<NamespaceModel.Namespace>> = [
@@ -75,8 +97,12 @@ class Namespace extends React.Component<NamespaceProps, NamespaceState> {
         width: 300
       },
       {
+        title: <FormattedMessage id="namespace.owner" />,
+        dataIndex: 'owner'
+      },
+      {
         title: <FormattedMessage id="namespace.createdAt" />,
-        render: (_, record) => moment(record.createdAt).calendar()
+        dataIndex: 'age'
       },
       {
         title: 'Action',
@@ -94,7 +120,7 @@ class Namespace extends React.Component<NamespaceProps, NamespaceState> {
           <Table
             className={styles.table}
             columns={columns}
-            dataSource={namespaces}
+            dataSource={this.getNamespaceInfo(this.props.namespaces)}
             size="small"
             bordered={false}
           />
@@ -119,7 +145,8 @@ class Namespace extends React.Component<NamespaceProps, NamespaceState> {
 
 const mapStateToProps = (state: RootState) => {
   return {
-    namespaces: state.cluster.namespaces
+    namespaces: state.cluster.namespaces,
+    users: state.user.users
   };
 };
 
@@ -130,7 +157,8 @@ const mapDispatchToProps = (dispatch: RTDispatch & Dispatch<RootAction>) => ({
   },
   removeNamespace: (id: string) => {
     dispatch(clusterOperations.removeNamespace(id));
-  }
+  },
+  fetchUsers: () => dispatch(userOperations.fetchUsers())
 });
 
 export default connect(

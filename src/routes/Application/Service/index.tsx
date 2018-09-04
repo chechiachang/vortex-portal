@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as ServiceModel from '@/models/Service';
+import * as UserModel from '@/models/User';
 import { connect } from 'react-redux';
 import * as styles from './styles.module.scss';
 import { Button, Icon, Tree, Tag, Popconfirm, Card, Table } from 'antd';
@@ -11,6 +12,8 @@ import { InjectedAuthRouterProps } from 'redux-auth-wrapper/history4/redirect';
 import { Dispatch } from 'redux';
 import { RootState, RootAction, RTDispatch } from '@/store/ducks';
 import { clusterOperations } from '@/store/ducks/cluster';
+import { userOperations } from '@/store/ducks/user';
+import { find } from 'lodash';
 
 import ServiceForm from '@/components/ServiceForm';
 
@@ -26,6 +29,8 @@ interface OwnProps {
   fetchServices: () => any;
   addService: (data: ServiceModel.Service) => any;
   removeService: (id: string) => any;
+  users: Array<UserModel.User>;
+  fetchUsers: () => any;
 }
 
 class Service extends React.Component<ServiceProps, ServiceState> {
@@ -38,6 +43,7 @@ class Service extends React.Component<ServiceProps, ServiceState> {
 
   public componentDidMount() {
     this.props.fetchServices();
+    this.props.fetchUsers();
   }
 
   protected showCreate = () => {
@@ -67,12 +73,35 @@ class Service extends React.Component<ServiceProps, ServiceState> {
     ];
   };
 
+  protected getServiceInfo = (services: Array<ServiceModel.Service>) => {
+    return services.map(service => {
+      const owner = find(this.props.users, user => {
+        return user.id === service.ownerID;
+      });
+      const displayName = owner === undefined ? 'none' : owner.displayName;
+      return {
+        id: service.id,
+        name: service.name,
+        owner: displayName,
+        type: service.type,
+        namespace: service.namespace,
+        selector: service.selector,
+        ports: service.ports,
+        age: moment(service.createdAt).calendar()
+      };
+    });
+  };
+
   public render() {
     const { services } = this.props;
     const columns: Array<ColumnProps<ServiceModel.Service>> = [
       {
         title: <FormattedMessage id="service.name" />,
         dataIndex: 'name'
+      },
+      {
+        title: <FormattedMessage id="service.owner" />,
+        dataIndex: 'owner'
       },
       {
         title: <FormattedMessage id="service.namespace" />,
@@ -141,7 +170,7 @@ class Service extends React.Component<ServiceProps, ServiceState> {
           <Table
             className={styles.table}
             columns={columns}
-            dataSource={services}
+            dataSource={this.getServiceInfo(this.props.services)}
             size="small"
           />
           <Button
@@ -165,7 +194,8 @@ class Service extends React.Component<ServiceProps, ServiceState> {
 
 const mapStateToProps = (state: RootState) => {
   return {
-    services: state.cluster.services
+    services: state.cluster.services,
+    users: state.user.users
   };
 };
 
@@ -174,7 +204,8 @@ const mapDispatchToProps = (dispatch: RTDispatch & Dispatch<RootAction>) => ({
   addService: (data: ServiceModel.Service) => {
     dispatch(clusterOperations.addService(data));
   },
-  removeService: (id: string) => dispatch(clusterOperations.removeService(id))
+  removeService: (id: string) => dispatch(clusterOperations.removeService(id)),
+  fetchUsers: () => dispatch(userOperations.fetchUsers())
 });
 
 export default connect(

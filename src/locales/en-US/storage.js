@@ -1,5 +1,6 @@
 export default {
   'storage.name': 'Name',
+  'storage.owner': 'Owner',
   'storage.type': 'Type',
   'storage.storageClassName': 'Storage Class Name',
   'storage.ip': 'IP',

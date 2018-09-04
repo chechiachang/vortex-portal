@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import * as DeploymentModel from '@/models/Deployment';
 import * as PodModel from '@/models/Pod';
+import * as UserModel from '@/models/User';
 import { connect } from 'react-redux';
 import {
   Button,
@@ -17,9 +18,11 @@ import { ColumnProps } from 'antd/lib/table';
 import * as moment from 'moment';
 import { FormattedMessage } from 'react-intl';
 import { InjectedAuthRouterProps } from 'redux-auth-wrapper/history4/redirect';
+import { find } from 'lodash';
 
 import { RootState, RTDispatch } from '@/store/ducks';
 import { clusterOperations } from '@/store/ducks/cluster';
+import { userOperations } from '@/store/ducks/user';
 
 import * as styles from './styles.module.scss';
 
@@ -45,6 +48,8 @@ interface OwnProps {
   fetchDeployments: () => any;
   fetchDeploymentsFromMongo: () => any;
   removeDeployment: (id: string) => any;
+  users: Array<UserModel.User>;
+  fetchUsers: () => any;
 }
 
 interface PodInfo {
@@ -84,6 +89,7 @@ class Deployment extends React.Component<DeploymentProps, DeploymentState> {
     this.props.fetchPods();
     this.props.fetchDeployments();
     this.props.fetchDeploymentsFromMongo();
+    this.props.fetchUsers();
   }
 
   public componentWillUnmount() {
@@ -111,15 +117,22 @@ class Deployment extends React.Component<DeploymentProps, DeploymentState> {
 
   protected getDeploymentInfo = (allDeployments: Array<string>) => {
     const { deployments } = this.props;
-    return allDeployments.map(deployment => ({
-      name: deployments[deployment].controllerName,
-      type: deployments[deployment].type,
-      namespace: deployments[deployment].namespace,
-      desiredPod: deployments[deployment].desiredPod,
-      currentPod: deployments[deployment].currentPod,
-      availablePod: deployments[deployment].availablePod,
-      age: moment(deployments[deployment].createAt * 1000).fromNow()
-    }));
+    return allDeployments.map(deployment => {
+      const owner = find(this.props.users, user => {
+        return user.id === deployments[deployment].ownerID;
+      });
+      const displayName = owner === undefined ? 'none' : owner.displayName;
+      return {
+        name: deployments[deployment].controllerName,
+        owner: displayName,
+        type: deployments[deployment].type,
+        namespace: deployments[deployment].namespace,
+        desiredPod: deployments[deployment].desiredPod,
+        currentPod: deployments[deployment].currentPod,
+        availablePod: deployments[deployment].availablePod,
+        age: moment(deployments[deployment].createAt * 1000).fromNow()
+      };
+    });
   };
 
   public renderTable = () => {
@@ -128,6 +141,10 @@ class Deployment extends React.Component<DeploymentProps, DeploymentState> {
         title: <FormattedMessage id="deployment.name" />,
         dataIndex: 'name',
         width: 300
+      },
+      {
+        title: <FormattedMessage id="deployment.owner" />,
+        dataIndex: 'owner'
       },
       {
         title: <FormattedMessage id="deployment.namespace" />,
@@ -351,13 +368,15 @@ const mapStateToProps = (state: RootState) => {
   state.cluster.deploymentsFromMongo.forEach(deployment => {
     if (state.cluster.deployments[deployment.name] !== undefined) {
       state.cluster.deployments[deployment.name].id = deployment.id;
+      state.cluster.deployments[deployment.name].ownerID = deployment.ownerID;
     }
   });
   return {
     pods: state.cluster.pods,
     podsNics: state.cluster.podsNics,
     deployments: state.cluster.deployments,
-    allDeployments: state.cluster.allDeployments
+    allDeployments: state.cluster.allDeployments,
+    users: state.user.users
   };
 };
 
@@ -368,7 +387,8 @@ const mapDispatchToProps = (dispatch: RTDispatch) => ({
   fetchDeploymentsFromMongo: () =>
     dispatch(clusterOperations.fetchDeploymentsFromMongo()),
   removeDeployment: (id: string) =>
-    dispatch(clusterOperations.removeDeployment(id))
+    dispatch(clusterOperations.removeDeployment(id)),
+  fetchUsers: () => dispatch(userOperations.fetchUsers())
 });
 
 export default connect(

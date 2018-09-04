@@ -94,7 +94,7 @@ class Namespace extends React.Component<NamespaceProps, NamespaceState> {
       {
         title: <FormattedMessage id="namespace.name" />,
         dataIndex: 'name',
-        width: 300
+        width: 200
       },
       {
         title: <FormattedMessage id="namespace.owner" />,

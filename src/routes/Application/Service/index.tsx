@@ -97,7 +97,8 @@ class Service extends React.Component<ServiceProps, ServiceState> {
     const columns: Array<ColumnProps<ServiceModel.Service>> = [
       {
         title: <FormattedMessage id="service.name" />,
-        dataIndex: 'name'
+        dataIndex: 'name',
+        width: 200
       },
       {
         title: <FormattedMessage id="service.owner" />,

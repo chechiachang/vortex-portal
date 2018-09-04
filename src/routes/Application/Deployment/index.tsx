@@ -140,7 +140,7 @@ class Deployment extends React.Component<DeploymentProps, DeploymentState> {
       {
         title: <FormattedMessage id="deployment.name" />,
         dataIndex: 'name',
-        width: 300
+        width: 200
       },
       {
         title: <FormattedMessage id="deployment.owner" />,

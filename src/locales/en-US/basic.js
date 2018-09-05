@@ -3,6 +3,8 @@ export default {
   'pod': 'Pod',
   'container': 'Container',
   'network': 'Network',
+  'namespace': 'Namespace',
+  'deployment': 'Deployment',
   'ovs': 'ovs',
   'dpdk': 'dpdk',
   'service': 'Service',

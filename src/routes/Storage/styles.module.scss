@@ -1,9 +1,17 @@
+@import '../../styles/variables';
+
 .card {
   margin-bottom: 2em;
 }
 
 .add {
   width: 100%;
+}
+
+.table {
+  th, td {
+    padding: $padding-md !important;
+  }
 }
 
 :global {

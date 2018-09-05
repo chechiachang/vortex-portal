@@ -1,14 +1,14 @@
 export default {
-  'node': 'node',
-  'pod': 'pod',
-  'container': 'container',
-  'network': 'network',
+  'node': 'Node',
+  'pod': 'Pod',
+  'container': 'Container',
+  'network': 'Network',
   'ovs': 'ovs',
   'dpdk': 'dpdk',
-  'service': 'service',
-  'user': 'user',
-  'storage': 'storage',
-  'volume': 'volume',
-  'overview': 'overview',
-  'createdAt': 'created at'
+  'service': 'Service',
+  'user': 'User',
+  'storage': 'Storage',
+  'volume': 'Volume',
+  'overview': 'Overview',
+  'createdAt': 'Created At'
 };
